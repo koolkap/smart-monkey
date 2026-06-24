@@ -6,13 +6,13 @@ import json
 from providers.base import LLMProvider
 from templates.html_themes.theme_registry import THEMES
 from utils.models import (
-  CertificationItem,
-  ContactInfo,
-  EducationItem,
-  ExperienceItem,
-  ProjectItem,
-  RequirementProfile,
-  ResumeProfile,
+    CertificationItem,
+    ContactInfo,
+    EducationItem,
+    ExperienceItem,
+    ProjectItem,
+    RequirementProfile,
+    ResumeProfile,
 )
 
 
@@ -25,66 +25,74 @@ def reconstruct_profile(
         return _heuristic_rewrite(base_profile, requirements)
 
     prompt = (
-      "Create a professional ATS-optimized resume JSON object using the candidate profile and job requirements. "
-      "Never invent employers, dates, degrees, certifications, tools, or experience that are not supported by the candidate profile. "
-      "You may rewrite summaries and achievements for clarity, stronger keyword alignment, and recruiter readability.\n\n"
-      "Optimization rules:\n"
-      "1. Prioritize exact job-description terminology when it truthfully matches the candidate profile.\n"
-      "2. Reflect the target role title in the headline or summary when justified.\n"
-      "3. Emphasize verified skills, technologies, tools, and responsibilities from the job requirements.\n"
-      "4. Strengthen achievement bullets with business impact language, but do not fabricate metrics.\n"
-      "5. Ensure the skills list includes relevant verified keywords from the job description.\n"
-      "6. Keep output concise, professional, and valid for ATS parsing.\n\n"
+        "Create a professional ATS-optimized resume JSON object using the candidate profile and job requirements. "
+        "Never invent employers, dates, degrees, certifications, tools, or experience that are not supported by the candidate profile. "
+        "You may rewrite summaries and achievements for clarity, stronger keyword alignment, and recruiter readability.\n\n"
+        "Optimization rules:\n"
+        "1. Prioritize exact job-description terminology when it truthfully matches the candidate profile.\n"
+        "2. Reflect the target role title in the headline or summary when justified.\n"
+        "3. Emphasize verified skills, technologies, tools, and responsibilities from the job requirements.\n"
+        "4. Strengthen achievement bullets with business impact language, but do not fabricate metrics.\n"
+        "5. Ensure the skills list includes relevant verified keywords from the job description.\n"
+        "6. Keep output concise, professional, and valid for ATS parsing.\n\n"
         f"Candidate profile:\n{json.dumps(base_profile.to_dict(), ensure_ascii=False, indent=2)}\n\n"
-      f"Job requirements:\n{json.dumps(requirements.to_dict(), ensure_ascii=False, indent=2)}\n\n"
-      "Return a complete ResumeProfile-compatible JSON object only."
+        f"Job requirements:\n{json.dumps(requirements.to_dict(), ensure_ascii=False, indent=2)}\n\n"
+        "Return a complete ResumeProfile-compatible JSON object only."
     )
     response = provider.generate(
-      prompt,
-      "Return valid JSON only. Optimize for ATS keyword alignment using only verified candidate evidence.",
+        prompt,
+        "Return valid JSON only. Optimize for ATS keyword alignment using only verified candidate evidence.",
     )
     try:
         data = json.loads(response)
-      return _coerce_resume_profile(data)
+        return _coerce_resume_profile(data)
     except Exception:
         return _heuristic_rewrite(base_profile, requirements)
 
 
-  def _coerce_resume_profile(data: dict) -> ResumeProfile:
+def _coerce_resume_profile(data: dict) -> ResumeProfile:
     contact = data.get("contact") or {}
     return ResumeProfile(
-      name=data.get("name", ""),
-      headline=data.get("headline", ""),
-      summary=data.get("summary", ""),
-      contact=ContactInfo(**contact) if isinstance(contact, dict) else ContactInfo(),
-      skills=list(data.get("skills") or []),
-      experience=[
-        ExperienceItem(**item) if isinstance(item, dict) else ExperienceItem()
-        for item in (data.get("experience") or [])
-      ],
-      education=[
-        EducationItem(**item) if isinstance(item, dict) else EducationItem()
-        for item in (data.get("education") or [])
-      ],
-      projects=[
-        ProjectItem(**item) if isinstance(item, dict) else ProjectItem()
-        for item in (data.get("projects") or [])
-      ],
-      certifications=[
-        CertificationItem(**item) if isinstance(item, dict) else CertificationItem()
-        for item in (data.get("certifications") or [])
-      ],
-      publications=list(data.get("publications") or []),
-      awards=list(data.get("awards") or []),
-      languages=list(data.get("languages") or []),
-      soft_skills=list(data.get("soft_skills") or []),
-      target_roles=list(data.get("target_roles") or []),
-      achievements_summary=list(data.get("achievements_summary") or []),
+        name=data.get("name", ""),
+        headline=data.get("headline", ""),
+        summary=data.get("summary", ""),
+        contact=ContactInfo(**contact) if isinstance(contact, dict) else ContactInfo(),
+        skills=list(data.get("skills") or []),
+        experience=[
+            ExperienceItem(**item) if isinstance(item, dict) else ExperienceItem()
+            for item in (data.get("experience") or [])
+        ],
+        education=[
+            EducationItem(**item) if isinstance(item, dict) else EducationItem()
+            for item in (data.get("education") or [])
+        ],
+        projects=[
+            ProjectItem(**item) if isinstance(item, dict) else ProjectItem()
+            for item in (data.get("projects") or [])
+        ],
+        certifications=[
+            CertificationItem(**item) if isinstance(item, dict) else CertificationItem()
+            for item in (data.get("certifications") or [])
+        ],
+        publications=list(data.get("publications") or []),
+        awards=list(data.get("awards") or []),
+        languages=list(data.get("languages") or []),
+        soft_skills=list(data.get("soft_skills") or []),
+        target_roles=list(data.get("target_roles") or []),
+        achievements_summary=list(data.get("achievements_summary") or []),
     )
 
 
+def normalize_resume_profile(profile: ResumeProfile | dict) -> ResumeProfile:
+    if isinstance(profile, ResumeProfile):
+        return _coerce_resume_profile(profile.to_dict())
+    if isinstance(profile, dict):
+        return _coerce_resume_profile(profile)
+    return ResumeProfile()
+
+
 def _heuristic_rewrite(base_profile: ResumeProfile, requirements: RequirementProfile) -> ResumeProfile:
-    profile = ResumeProfile(**base_profile.to_dict())
+    profile = normalize_resume_profile(base_profile)
     prioritized_keywords = []
     for item in requirements.skills + requirements.technologies + requirements.tools + requirements.keywords:
         if item and item not in prioritized_keywords:
@@ -122,6 +130,7 @@ def enhance_achievement(text: str, requirements: RequirementProfile) -> str:
 
 
 def generate_resume_html(profile: ResumeProfile, theme_name: str, photo_data_uri: str | None = None) -> str:
+    profile = normalize_resume_profile(profile)
     theme = THEMES[theme_name]
     experience_html = "".join(
         f"<article class='item'><h4>{html.escape(item.title)} | {html.escape(item.company)}</h4>"

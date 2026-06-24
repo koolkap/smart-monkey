@@ -94,6 +94,8 @@ class ATSReport:
     match_percentage: int
     recruiter_visibility_score: int
     skill_match_percentage: int
+    experience_match_percentage: int = 0
+    role_match_percentage: int = 0
     industry_relevance_score: int
     keyword_density: float
     missing_skills: list[str]
@@ -108,6 +110,10 @@ class ATSReport:
     career_level_estimation: str
     expected_screening_result: str
     scoring_explanations: list[str]
+    recruiter_decision: str = "LIKELY REJECTED"
+    recruiter_decision_reason: str = ""
+    years_of_experience: str = ""
+    section_scores: dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -197,3 +203,37 @@ class ProviderSettings:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+@dataclass
+class WorkflowArtifacts:
+    base_profile: ResumeProfile = field(default_factory=ResumeProfile)
+    optimized_profile: ResumeProfile = field(default_factory=ResumeProfile)
+    localized_profile: ResumeProfile = field(default_factory=ResumeProfile)
+    requirements: RequirementProfile = field(default_factory=RequirementProfile)
+    ats_report: ATSReport | None = None
+    design_intelligence: DesignIntelligence | None = None
+    ai_insights: AIInsights | None = None
+    english_html: str = ""
+    korean_html: str = ""
+    active_language: str = "English"
+    selected_theme: str = "Modern ATS"
+    selected_route: str = "/upload"
+    selected_variant: str = "ATS Optimized"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "base_profile": self.base_profile.to_dict(),
+            "optimized_profile": self.optimized_profile.to_dict(),
+            "localized_profile": self.localized_profile.to_dict(),
+            "requirements": self.requirements.to_dict(),
+            "ats_report": self.ats_report.to_dict() if self.ats_report else None,
+            "design_intelligence": self.design_intelligence.to_dict() if self.design_intelligence else None,
+            "ai_insights": self.ai_insights.to_dict() if self.ai_insights else None,
+            "english_html": self.english_html,
+            "korean_html": self.korean_html,
+            "active_language": self.active_language,
+            "selected_theme": self.selected_theme,
+            "selected_route": self.selected_route,
+            "selected_variant": self.selected_variant,
+        }

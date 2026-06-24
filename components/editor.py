@@ -4,6 +4,7 @@ import json
 
 import streamlit as st
 
+from utils.resume_builder import normalize_resume_profile
 from utils.models import ResumeProfile
 
 
@@ -44,7 +45,7 @@ def render_profile_editor(profile: ResumeProfile, key_prefix: str = "editor") ->
     )
     try:
         data = json.loads(profile_json)
-        profile = ResumeProfile(**data)
+        profile = normalize_resume_profile(data)
     except Exception:
         st.caption("JSON editor contains invalid structure. Using field editor values.")
     return profile
