@@ -5,6 +5,15 @@ import logging
 import re
 from typing import Iterable
 
+try:
+    import fitz
+except Exception:
+    fitz = None
+
+try:
+    import pdfplumber
+except Exception:
+    pdfplumber = None
 from pypdf import PdfReader
 
 from utils.models import CertificationItem, ContactInfo, EducationItem, ExperienceItem, ProjectItem, RequirementProfile, ResumeProfile
@@ -13,9 +22,32 @@ LOGGER = logging.getLogger(__name__)
 
 
 def extract_text_from_pdf_bytes(file_bytes: bytes) -> str:
-    reader = PdfReader(io.BytesIO(file_bytes))
-    pages = [page.extract_text() or "" for page in reader.pages]
-    return "\n".join(pages)
+    chunks: list[str] = []
+    try:
+        reader = PdfReader(io.BytesIO(file_bytes))
+        chunks.extend(page.extract_text() or "" for page in reader.pages)
+    except Exception:
+        LOGGER.exception("pypdf extraction failed, trying fallbacks")
+
+    if not any(chunk.strip() for chunk in chunks):
+        try:
+            if pdfplumber is None:
+                raise RuntimeError("pdfplumber unavailable")
+            with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+                chunks = [(page.extract_text() or "") for page in pdf.pages]
+        except Exception:
+            LOGGER.exception("pdfplumber extraction failed, trying PyMuPDF")
+
+    if not any(chunk.strip() for chunk in chunks):
+        try:
+            if fitz is None:
+                raise RuntimeError("PyMuPDF unavailable")
+            document = fitz.open(stream=file_bytes, filetype="pdf")
+            chunks = [page.get_text("text") for page in document]
+        except Exception:
+            LOGGER.exception("PyMuPDF extraction failed")
+
+    return "\n".join(chunk for chunk in chunks if chunk)
 
 
 def extract_text_from_uploads(files: Iterable) -> str:
@@ -54,6 +86,7 @@ def build_resume_profile(raw_text: str) -> ResumeProfile:
     name = lines[0] if lines else "Candidate"
     summary = " ".join(lines[1:4])[:500]
     skills = _extract_skill_candidates(raw_text)
+    soft_skills = _extract_soft_skills(raw_text)
     experience = [
         ExperienceItem(
             title="Professional Experience",
@@ -74,16 +107,19 @@ def build_resume_profile(raw_text: str) -> ResumeProfile:
             github=_extract_links(raw_text, "github"),
         ),
         skills=skills,
+        soft_skills=soft_skills,
         experience=experience,
         education=education,
         projects=projects,
         certifications=certifications,
+        achievements_summary=experience[0].achievements[:4],
     )
 
 
 def build_requirement_profile(raw_text: str) -> RequirementProfile:
     lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
     keywords = _extract_skill_candidates(raw_text)
+    soft_skills = _extract_soft_skills(raw_text)
     responsibilities = [line for line in lines if len(line.split()) > 6][:8]
     return RequirementProfile(
         title=lines[0] if lines else "Target Role",
@@ -91,7 +127,9 @@ def build_requirement_profile(raw_text: str) -> RequirementProfile:
         summary=" ".join(lines[:4])[:500],
         responsibilities=responsibilities,
         skills=keywords[:12],
+        soft_skills=soft_skills,
         technologies=keywords[:12],
+        tools=keywords[:10],
         keywords=keywords,
         certifications=[word for word in keywords if "cert" in word.lower()][:5],
         experience_level=_infer_experience_level(raw_text),
@@ -119,3 +157,20 @@ def _infer_experience_level(text: str) -> str:
     if "junior" in lowered or "entry" in lowered:
         return "Junior"
     return "Mid-Level"
+
+
+def _extract_soft_skills(text: str) -> list[str]:
+    soft_skill_terms = [
+        "leadership",
+        "communication",
+        "stakeholder management",
+        "problem solving",
+        "collaboration",
+        "mentoring",
+        "ownership",
+        "presentation",
+        "teamwork",
+        "adaptability",
+    ]
+    lowered = text.lower()
+    return [term.title() for term in soft_skill_terms if term in lowered]

@@ -8,3 +8,4 @@ __pycache__/
 data/cache/
 data/exports/
 data/uploads/
+data/settings.json

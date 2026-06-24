@@ -23,6 +23,7 @@ def build_provider(settings: ProviderSettings) -> LLMProvider:
                 azure_endpoint=settings.openai_endpoint,
                 azure_api_key=settings.openai_api_key,
                 azure_deployment=settings.openai_model,
+                azure_api_version="",
             )
         )
     return OllamaProvider(settings)

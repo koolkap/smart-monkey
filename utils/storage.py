@@ -20,6 +20,7 @@ def _env_overrides() -> dict[str, str]:
         "azure_endpoint": "AZURE_FOUNDRY_ENDPOINT",
         "azure_api_key": "AZURE_FOUNDRY_API_KEY",
         "azure_deployment": "AZURE_FOUNDRY_DEPLOYMENT",
+        "azure_api_version": "AZURE_FOUNDRY_API_VERSION",
         "openai_endpoint": "OPENAI_COMPATIBLE_ENDPOINT",
         "openai_api_key": "OPENAI_COMPATIBLE_API_KEY",
         "openai_model": "OPENAI_COMPATIBLE_MODEL",

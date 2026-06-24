@@ -29,3 +29,9 @@ class GeminiProvider(LLMProvider):
             f"Translate and localize from {source_language} to {target_language}:\n\n{text}",
             "Use professional hiring terminology and natural phrasing.",
         )
+
+    def analyze_resume(self, text: str) -> str:
+        return self.generate(text, "Analyze this resume and extract structured candidate intelligence.")
+
+    def analyze_jd(self, text: str) -> str:
+        return self.generate(text, "Analyze this job description and extract structured requirement intelligence.")

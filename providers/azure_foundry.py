@@ -9,9 +9,14 @@ from utils.models import ProviderSettings
 class AzureFoundryProvider(LLMProvider):
     def __init__(self, settings: ProviderSettings) -> None:
         self.settings = settings
+        base_url = settings.azure_endpoint.rstrip("/")
+        if settings.azure_api_version:
+            base_url = f"{base_url}/openai/v1/?api-version={settings.azure_api_version}"
+        else:
+            base_url = f"{base_url}/openai/v1/"
         self.client = OpenAI(
             api_key=settings.azure_api_key,
-            base_url=settings.azure_endpoint.rstrip("/") + "/openai/v1/",
+            base_url=base_url,
         )
 
     def generate(self, prompt: str, system_prompt: str | None = None) -> str:
@@ -45,3 +50,9 @@ class AzureFoundryProvider(LLMProvider):
             f"{text}"
         )
         return self.generate(prompt, "You are an expert resume localization specialist.")
+
+    def analyze_resume(self, text: str) -> str:
+        return self.generate(text, "Analyze this resume and extract structured candidate intelligence.")
+
+    def analyze_jd(self, text: str) -> str:
+        return self.generate(text, "Analyze this job description and extract structured requirement intelligence.")

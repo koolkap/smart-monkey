@@ -17,12 +17,24 @@ def reconstruct_profile(
         return _heuristic_rewrite(base_profile, requirements)
 
     prompt = (
-        "Create a professional resume JSON object using the candidate profile and job requirements. "
-        "Never invent employers, dates, or experience. You may rewrite summaries and achievements for clarity.\n\n"
+      "Create a professional ATS-optimized resume JSON object using the candidate profile and job requirements. "
+      "Never invent employers, dates, degrees, certifications, tools, or experience that are not supported by the candidate profile. "
+      "You may rewrite summaries and achievements for clarity, stronger keyword alignment, and recruiter readability.\n\n"
+      "Optimization rules:\n"
+      "1. Prioritize exact job-description terminology when it truthfully matches the candidate profile.\n"
+      "2. Reflect the target role title in the headline or summary when justified.\n"
+      "3. Emphasize verified skills, technologies, tools, and responsibilities from the job requirements.\n"
+      "4. Strengthen achievement bullets with business impact language, but do not fabricate metrics.\n"
+      "5. Ensure the skills list includes relevant verified keywords from the job description.\n"
+      "6. Keep output concise, professional, and valid for ATS parsing.\n\n"
         f"Candidate profile:\n{json.dumps(base_profile.to_dict(), ensure_ascii=False, indent=2)}\n\n"
-        f"Job requirements:\n{json.dumps(requirements.to_dict(), ensure_ascii=False, indent=2)}"
+      f"Job requirements:\n{json.dumps(requirements.to_dict(), ensure_ascii=False, indent=2)}\n\n"
+      "Return a complete ResumeProfile-compatible JSON object only."
     )
-    response = provider.generate(prompt, "Return valid JSON only.")
+    response = provider.generate(
+      prompt,
+      "Return valid JSON only. Optimize for ATS keyword alignment using only verified candidate evidence.",
+    )
     try:
         data = json.loads(response)
         return ResumeProfile(**data)
@@ -32,7 +44,11 @@ def reconstruct_profile(
 
 def _heuristic_rewrite(base_profile: ResumeProfile, requirements: RequirementProfile) -> ResumeProfile:
     profile = ResumeProfile(**base_profile.to_dict())
-    top_skills = ", ".join((requirements.skills or requirements.keywords)[:6])
+    prioritized_keywords = []
+    for item in requirements.skills + requirements.technologies + requirements.tools + requirements.keywords:
+        if item and item not in prioritized_keywords:
+            prioritized_keywords.append(item)
+    top_skills = ", ".join(prioritized_keywords[:6])
     profile.headline = requirements.title or profile.headline or "Targeted Professional Resume"
     if profile.summary:
         profile.summary = (
@@ -42,6 +58,14 @@ def _heuristic_rewrite(base_profile: ResumeProfile, requirements: RequirementPro
         )
     else:
         profile.summary = f"Results-oriented professional aligned to {requirements.title} with strengths in {top_skills}."
+    existing_skills = {skill.lower() for skill in profile.skills}
+    base_skills = {skill.lower() for skill in base_profile.skills}
+    for keyword in prioritized_keywords:
+        if keyword.lower() in existing_skills:
+            continue
+        if keyword.lower() in base_skills:
+            profile.skills.append(keyword)
+            existing_skills.add(keyword.lower())
     for item in profile.experience:
         if item.achievements:
             item.achievements = [enhance_achievement(line, requirements) for line in item.achievements]

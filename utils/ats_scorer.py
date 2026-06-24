@@ -12,11 +12,15 @@ def score_resume(profile: ResumeProfile, requirements: RequirementProfile) -> AT
     missing = sorted(skill.title() for skill in required_skills if skill not in resume_skills)
     weak_keywords = missing[:5]
     strength_areas = [skill.title() for skill in matched[:6]]
+    resume_strengths = strength_areas + profile.soft_skills[:3]
+    resume_weaknesses = []
 
     match_ratio = len(matched) / max(len(required_skills), 1)
     keyword_density = len(matched) / max(len(profile.skills), 1)
     ats_score = min(100, int(match_ratio * 70 + keyword_density * 30))
     recruiter_visibility = min(100, int(ats_score * 0.9 + len(profile.experience) * 4))
+    skill_match = min(100, int((len(matched) / max(len(requirements.skills), 1)) * 100))
+    industry_relevance = min(100, int((len(matched) + len(profile.soft_skills)) * 8))
 
     suggestions = []
     if missing:
@@ -25,6 +29,9 @@ def score_resume(profile: ResumeProfile, requirements: RequirementProfile) -> AT
         suggestions.append("Add a targeted professional summary aligned to the role.")
     if len(profile.skills) < 8:
         suggestions.append("Expand the skills section with verified tools and platforms from your experience.")
+        resume_weaknesses.append("Skills section is too narrow for ATS breadth.")
+    if not profile.achievements_summary:
+        resume_weaknesses.append("Experience bullets need stronger quantified outcomes.")
     if not suggestions:
         suggestions.append("Resume is well aligned. Focus on quantifying achievements for stronger recruiter impact.")
 
@@ -39,17 +46,31 @@ def score_resume(profile: ResumeProfile, requirements: RequirementProfile) -> AT
         else "Partial fit. Resume should be tailored further to emphasize role-specific outcomes and keywords."
     )
     career_level = requirements.experience_level or "Mid-Level"
+    expected_screening_result = "Likely shortlist" if ats_score >= 80 else "Possible recruiter review" if ats_score >= 65 else "Needs optimization before applying"
+    scoring_explanations = [
+        f"ATS score is driven by {len(matched)} matched requirement keywords out of {len(required_skills)}.",
+        f"Recruiter visibility improves with stronger keyword coverage and clearer achievement framing.",
+        f"Industry relevance reflects overlap between role-specific tools, technologies, and communication signals.",
+    ]
 
     return ATSReport(
         ats_score=ats_score,
         match_percentage=int(match_ratio * 100),
         recruiter_visibility_score=recruiter_visibility,
+        skill_match_percentage=skill_match,
+        industry_relevance_score=industry_relevance,
         keyword_density=round(keyword_density, 2),
         missing_skills=missing,
+        missing_keywords=missing,
         weak_keywords=weak_keywords,
         strength_areas=strength_areas,
+        resume_weaknesses=resume_weaknesses,
+        resume_strengths=resume_strengths,
         suggested_improvements=suggestions,
         gap_analysis=gap_analysis,
         role_fit_analysis=role_fit,
         career_level_estimation=career_level,
+        expected_screening_result=expected_screening_result,
+        scoring_explanations=scoring_explanations,
     )
+

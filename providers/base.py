@@ -21,5 +21,13 @@ class LLMProvider(ABC):
     def translate(self, text: str, source_language: str, target_language: str) -> str:
         raise NotImplementedError
 
+    @abstractmethod
+    def analyze_resume(self, text: str) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def analyze_jd(self, text: str) -> str:
+        raise NotImplementedError
+
     def stream(self, prompt: str, system_prompt: str | None = None) -> Any:
         yield self.generate(prompt, system_prompt)

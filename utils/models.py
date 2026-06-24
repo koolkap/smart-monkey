@@ -62,6 +62,9 @@ class ResumeProfile:
     publications: list[str] = field(default_factory=list)
     awards: list[str] = field(default_factory=list)
     languages: list[str] = field(default_factory=list)
+    soft_skills: list[str] = field(default_factory=list)
+    target_roles: list[str] = field(default_factory=list)
+    achievements_summary: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -74,8 +77,10 @@ class RequirementProfile:
     summary: str = ""
     responsibilities: list[str] = field(default_factory=list)
     skills: list[str] = field(default_factory=list)
+    soft_skills: list[str] = field(default_factory=list)
     technologies: list[str] = field(default_factory=list)
     keywords: list[str] = field(default_factory=list)
+    tools: list[str] = field(default_factory=list)
     certifications: list[str] = field(default_factory=list)
     experience_level: str = ""
 
@@ -88,17 +93,89 @@ class ATSReport:
     ats_score: int
     match_percentage: int
     recruiter_visibility_score: int
+    skill_match_percentage: int
+    industry_relevance_score: int
     keyword_density: float
     missing_skills: list[str]
+    missing_keywords: list[str]
     weak_keywords: list[str]
     strength_areas: list[str]
+    resume_weaknesses: list[str]
+    resume_strengths: list[str]
     suggested_improvements: list[str]
     gap_analysis: list[str]
     role_fit_analysis: str
     career_level_estimation: str
+    expected_screening_result: str
+    scoring_explanations: list[str]
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+@dataclass
+class DesignIntelligence:
+    layout_style: str = "single-column"
+    typography: str = "professional serif"
+    font_hierarchy: list[str] = field(default_factory=list)
+    margins: str = "balanced"
+    section_arrangement: list[str] = field(default_factory=list)
+    white_space: str = "moderate"
+    color_palette: list[str] = field(default_factory=list)
+    header_structure: str = "hero"
+    sidebar_structure: str = "none"
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class InterviewReadinessReport:
+    readiness_score: int
+    likely_questions: list[str] = field(default_factory=list)
+    talking_points: list[str] = field(default_factory=list)
+    risk_areas: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class RecruiterSimulation:
+    first_impression: str
+    recruiter_feedback: list[str] = field(default_factory=list)
+    shortlist_probability: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class AIInsights:
+    role_match_analysis: str = ""
+    interview_readiness: InterviewReadinessReport = field(
+        default_factory=lambda: InterviewReadinessReport(readiness_score=0)
+    )
+    recruiter_simulation: RecruiterSimulation = field(
+        default_factory=lambda: RecruiterSimulation(first_impression="", shortlist_probability=0)
+    )
+    career_gap_analysis: list[str] = field(default_factory=list)
+    promotion_readiness_analysis: str = ""
+    skill_recommendations: list[str] = field(default_factory=list)
+    resume_quality_score: int = 0
+    application_success_prediction: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "role_match_analysis": self.role_match_analysis,
+            "interview_readiness": self.interview_readiness.to_dict(),
+            "recruiter_simulation": self.recruiter_simulation.to_dict(),
+            "career_gap_analysis": self.career_gap_analysis,
+            "promotion_readiness_analysis": self.promotion_readiness_analysis,
+            "skill_recommendations": self.skill_recommendations,
+            "resume_quality_score": self.resume_quality_score,
+            "application_success_prediction": self.application_success_prediction,
+        }
 
 
 @dataclass
@@ -107,6 +184,7 @@ class ProviderSettings:
     azure_endpoint: str = ""
     azure_api_key: str = ""
     azure_deployment: str = ""
+    azure_api_version: str = "2025-01-01-preview"
     openai_endpoint: str = ""
     openai_api_key: str = ""
     openai_model: str = ""

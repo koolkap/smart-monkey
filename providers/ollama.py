@@ -39,3 +39,9 @@ class OllamaProvider(LLMProvider):
             f"Translate and localize from {source_language} to {target_language}:\n\n{text}",
             "You are a professional resume localization expert.",
         )
+
+    def analyze_resume(self, text: str) -> str:
+        return self._post(text, "Analyze this resume and extract structured candidate intelligence.")
+
+    def analyze_jd(self, text: str) -> str:
+        return self._post(text, "Analyze this job description and extract structured requirement intelligence.")

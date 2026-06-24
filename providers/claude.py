@@ -49,3 +49,9 @@ class ClaudeProvider(LLMProvider):
             f"Localize this resume content from {source_language} to {target_language}:\n\n{text}",
             "You are a bilingual recruiter and resume writer.",
         )
+
+    def analyze_resume(self, text: str) -> str:
+        return self.generate(text, "Analyze this resume and return structured candidate intelligence.")
+
+    def analyze_jd(self, text: str) -> str:
+        return self.generate(text, "Analyze this job description and return structured requirement intelligence.")

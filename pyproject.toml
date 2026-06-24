@@ -1,7 +1,7 @@
 [project]
-name = "resumeforge-ai"
+name = "smart-monkey"
 version = "0.1.0"
-description = "ResumeForge AI - ATS optimized multilingual resume generator"
+description = "Smart Monkey - ATS optimized multilingual resume generator"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
