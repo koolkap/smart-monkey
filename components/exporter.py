@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import streamlit as st
@@ -27,13 +26,6 @@ def render_downloads(english_html: str, korean_html: str, profile: ResumeProfile
     st.subheader("Export")
     st.download_button("Download English HTML", english_html, file_name="resume_en.html")
     st.download_button("Download Korean HTML", korean_html, file_name="resume_ko.html")
-    st.download_button("Download HTML", english_html, file_name="resume.html")
-    st.download_button(
-        "Download JSON",
-        json.dumps(profile.to_dict(), indent=2),
-        file_name="resume.json",
-        mime="application/json",
-    )
 
     if HTML is None:
         st.warning(

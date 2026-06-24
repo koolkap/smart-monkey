@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
-
 import streamlit as st
 
-from utils.resume_builder import normalize_resume_profile
 from utils.models import ResumeProfile
 
 
@@ -36,16 +33,4 @@ def render_profile_editor(profile: ResumeProfile, key_prefix: str = "editor") ->
         key=f"{key_prefix}_achievements",
     )
     profile.achievements_summary = [line.strip() for line in achievements_text.splitlines() if line.strip()]
-
-    profile_json = st.text_area(
-        "Advanced JSON Editor",
-        value=json.dumps(profile.to_dict(), ensure_ascii=False, indent=2),
-        height=420,
-        key=f"{key_prefix}_json",
-    )
-    try:
-        data = json.loads(profile_json)
-        profile = normalize_resume_profile(data)
-    except Exception:
-        st.caption("JSON editor contains invalid structure. Using field editor values.")
     return profile
