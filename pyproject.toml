@@ -1,0 +1,15 @@
+[project]
+name = "resumeforge-ai"
+version = "0.1.0"
+description = "ResumeForge AI - ATS optimized multilingual resume generator"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
