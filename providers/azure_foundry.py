@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from openai import OpenAI
+from openai import AzureOpenAI
 
 from providers.base import LLMProvider
 from utils.models import ProviderSettings
@@ -9,14 +9,10 @@ from utils.models import ProviderSettings
 class AzureFoundryProvider(LLMProvider):
     def __init__(self, settings: ProviderSettings) -> None:
         self.settings = settings
-        base_url = settings.azure_endpoint.rstrip("/")
-        if settings.azure_api_version:
-            base_url = f"{base_url}/openai/v1/?api-version={settings.azure_api_version}"
-        else:
-            base_url = f"{base_url}/openai/v1/"
-        self.client = OpenAI(
+        self.client = AzureOpenAI(
             api_key=settings.azure_api_key,
-            base_url=base_url,
+            azure_endpoint=settings.azure_endpoint.rstrip("/"),
+            api_version=settings.azure_api_version,
         )
 
     def generate(self, prompt: str, system_prompt: str | None = None) -> str:
@@ -27,7 +23,6 @@ class AzureFoundryProvider(LLMProvider):
         response = self.client.chat.completions.create(
             model=self.settings.azure_deployment,
             messages=messages,
-            temperature=0.2,
         )
         return response.choices[0].message.content or ""
 
@@ -35,7 +30,6 @@ class AzureFoundryProvider(LLMProvider):
         response = self.client.chat.completions.create(
             model=self.settings.azure_deployment,
             messages=messages,
-            temperature=0.2,
         )
         return response.choices[0].message.content or ""
 
