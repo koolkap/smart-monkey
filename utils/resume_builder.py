@@ -5,7 +5,15 @@ import json
 
 from providers.base import LLMProvider
 from templates.html_themes.theme_registry import THEMES
-from utils.models import RequirementProfile, ResumeProfile
+from utils.models import (
+  CertificationItem,
+  ContactInfo,
+  EducationItem,
+  ExperienceItem,
+  ProjectItem,
+  RequirementProfile,
+  ResumeProfile,
+)
 
 
 def reconstruct_profile(
@@ -37,9 +45,42 @@ def reconstruct_profile(
     )
     try:
         data = json.loads(response)
-        return ResumeProfile(**data)
+      return _coerce_resume_profile(data)
     except Exception:
         return _heuristic_rewrite(base_profile, requirements)
+
+
+  def _coerce_resume_profile(data: dict) -> ResumeProfile:
+    contact = data.get("contact") or {}
+    return ResumeProfile(
+      name=data.get("name", ""),
+      headline=data.get("headline", ""),
+      summary=data.get("summary", ""),
+      contact=ContactInfo(**contact) if isinstance(contact, dict) else ContactInfo(),
+      skills=list(data.get("skills") or []),
+      experience=[
+        ExperienceItem(**item) if isinstance(item, dict) else ExperienceItem()
+        for item in (data.get("experience") or [])
+      ],
+      education=[
+        EducationItem(**item) if isinstance(item, dict) else EducationItem()
+        for item in (data.get("education") or [])
+      ],
+      projects=[
+        ProjectItem(**item) if isinstance(item, dict) else ProjectItem()
+        for item in (data.get("projects") or [])
+      ],
+      certifications=[
+        CertificationItem(**item) if isinstance(item, dict) else CertificationItem()
+        for item in (data.get("certifications") or [])
+      ],
+      publications=list(data.get("publications") or []),
+      awards=list(data.get("awards") or []),
+      languages=list(data.get("languages") or []),
+      soft_skills=list(data.get("soft_skills") or []),
+      target_roles=list(data.get("target_roles") or []),
+      achievements_summary=list(data.get("achievements_summary") or []),
+    )
 
 
 def _heuristic_rewrite(base_profile: ResumeProfile, requirements: RequirementProfile) -> ResumeProfile:
