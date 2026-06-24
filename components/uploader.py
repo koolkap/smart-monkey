@@ -7,14 +7,14 @@ def render_uploaders() -> dict[str, object]:
     st.subheader("Source Inputs")
     resume_files = st.file_uploader(
         "Upload current resume, portfolio, projects, or certificates",
-        type=["pdf", "txt"],
+        type=["pdf", "docx", "txt"],
         accept_multiple_files=True,
         key="resume_files",
     )
     jd_text = st.text_area("Paste job description", height=220, key="jd_text")
     jd_files = st.file_uploader(
         "Or upload job description PDFs",
-        type=["pdf", "txt"],
+        type=["pdf", "docx", "txt"],
         accept_multiple_files=True,
         key="jd_files",
     )

@@ -94,8 +94,6 @@ class ATSReport:
     match_percentage: int
     recruiter_visibility_score: int
     skill_match_percentage: int
-    experience_match_percentage: int = 0
-    role_match_percentage: int = 0
     industry_relevance_score: int
     keyword_density: float
     missing_skills: list[str]
@@ -110,6 +108,8 @@ class ATSReport:
     career_level_estimation: str
     expected_screening_result: str
     scoring_explanations: list[str]
+    experience_match_percentage: int = 0
+    role_match_percentage: int = 0
     recruiter_decision: str = "LIKELY REJECTED"
     recruiter_decision_reason: str = ""
     years_of_experience: str = ""
