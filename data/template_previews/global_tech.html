@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+  <style>
+    :root {
+      --accent: #006D77;
+      --background: #EDF6F9;
+      --surface: #FFFFFF;
+      --text: #0B132B;
+      --muted: #3A506B;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: linear-gradient(135deg, var(--background), #ffffff); color: var(--text); font-family: 'Segoe UI', sans-serif; }
+    .page { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 18mm; background: var(--surface); display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+    .hero { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); padding-bottom: 12px; }
+    h1, h2, h3, h4 { font-family: 'Century Schoolbook', serif; margin: 0; }
+    h1 { font-size: 30px; letter-spacing: 0.02em; }
+    h2 { font-size: 14px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+    .headline { color: var(--muted); margin-top: 6px; }
+    .headshot { width: 110px; height: 110px; object-fit: cover; border-radius: 18px; border: 3px solid var(--accent); }
+    .section { margin-bottom: 18px; }
+    .item { margin-bottom: 12px; }
+    .meta { color: var(--muted); font-size: 12px; }
+    ul { margin: 8px 0 0 18px; padding: 0; }
+    .skills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: rgba(15, 76, 129, 0.08); color: var(--accent); padding: 6px 10px; border-radius: 999px; font-size: 12px; }
+    .sidebar { background: rgba(0, 0, 0, 0.02); padding: 14px; border-radius: 16px; }
+    @media (max-width: 900px) {
+      .page { width: 100%; min-height: auto; padding: 20px; grid-template-columns: 1fr; }
+      .hero { align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main class='page'>
+    <section class='hero'>
+      <div>
+        <h1 contenteditable='true'>AJIT KOHIR</h1>
+        <p class='headline' contenteditable='true'>CTO / VP Engineering / Head of Engineering | DeepTech Founder | AI SaaS Architect</p>
+        <p contenteditable='true'>Senior technology leader and DeepTech founder with 15+ years building AI-native SaaS platforms across India and South Korea. Experienced CTO and AI SaaS architect focused on technology strategy, product innovation, engineering leadership, GenAI, LLMOps, XR and Spatial AI, and multi-cloud platforms across AWS, Azure, and GCP. Co-founder of Avidia Labs and creator of SceneGPT.ai, a DeepTech AI SaaS platform for generative scene intelligence, spatial reasoning, and multi-modal content automation. Holder of 2 granted patents with proven experience in 0-to-1 product launches.</p>
+      </div>
+      
+    </section>
+    <section>
+      <div class='section'>
+        <h2>Experience</h2>
+        <article class='item'><h4>Co-Founder / Chief Technology Officer / AI SaaS Architect | Avidia Labs</h4><p class='meta'> - </p><ul><li>Led technology strategy, product innovation, and engineering execution as Co-founder and CTO for DeepTech AI SaaS initiatives.</li><li>Created SceneGPT.ai, a DeepTech AI SaaS platform focused on generative scene intelligence, spatial reasoning, and multi-modal content automation.</li><li>Built AI-native SaaS platforms using GenAI, LLM, LLMOps, Python, cloud infrastructure, and multi-cloud architecture across AWS, Azure, and GCP.</li><li>Applied DevOps, CI/CD, Docker, Terraform, and Git practices to support scalable SaaS engineering workflows.</li><li>Drove 0-to-1 product launches, translating DeepTech concepts into market-ready AI SaaS products.</li><li>Contributed patented innovation as holder of 2 granted patents in DeepTech and AI-related domains.</li></ul></article>
+      </div>
+      <div class='section'>
+        <h2>Projects</h2>
+        <article class='item'><h4>SceneGPT.ai</h4><p>DeepTech AI SaaS platform for generative scene intelligence, spatial reasoning, and multi-modal content automation.</p></article>
+      </div>
+    </section>
+    <aside class='sidebar'>
+      <div class='section'>
+        <h2>Contact</h2>
+        <p>ajitkohir@gmail.com</p>
+        <p>+82 10-3054-2914</p>
+        <p></p>
+        <p></p>
+      </div>
+      <div class='section'>
+        <h2>Skills</h2>
+        <div class='skills'><span class='chip'>AI</span><span class='chip'>GenAI</span><span class='chip'>LLM</span><span class='chip'>LLMOps</span><span class='chip'>NLP</span><span class='chip'>OpenAI</span><span class='chip'>Python</span><span class='chip'>PyTorch</span><span class='chip'>AWS</span><span class='chip'>Azure</span><span class='chip'>GCP</span><span class='chip'>Multi-Cloud</span><span class='chip'>DevOps</span><span class='chip'>CI/CD</span><span class='chip'>Docker</span><span class='chip'>Terraform</span><span class='chip'>Git</span><span class='chip'>React</span><span class='chip'>TypeScript</span><span class='chip'>XR</span><span class='chip'>Spatial AI</span><span class='chip'>SaaS Architecture</span><span class='chip'>Product Innovation</span><span class='chip'>Technology Strategy</span><span class='chip'>Engineering Leadership</span><span class='chip'>0-to-1 Product Launches</span></div>
+      </div>
+      <div class='section'>
+        <h2>Education</h2>
+        
+      </div>
+      <div class='section'>
+        <h2>Certifications</h2>
+        <ul></ul>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>

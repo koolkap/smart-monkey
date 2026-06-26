@@ -5,12 +5,10 @@ from pathlib import Path
 
 import streamlit as st
 
-from components.ats_engine import render_ats_report
 from components.editor import render_profile_editor
 from components.exporter import render_downloads
-from components.insights_panel import render_ai_insights, render_design_intelligence
-from components.uploader import render_uploaders
 from providers.factory import build_provider
+from templates.html_themes.theme_registry import THEMES
 from utils.ats_scorer import score_resume
 from utils.design_analyzer import analyze_design_reference
 from utils.image_parser import enhance_headshot, image_to_data_uri
@@ -19,12 +17,12 @@ from utils.models import ProviderSettings, ResumeProfile, WorkflowArtifacts
 from utils.pdf_parser import build_requirement_profile, build_resume_profile, extract_text_from_uploads
 from utils.resume_builder import generate_resume_html, reconstruct_profile
 from utils.storage import load_settings, save_settings
+from utils.template_previews import generate_preview_images, get_preview_image_path, preview_image_exists, write_preview_html
 from utils.translator import localize_resume
 
 logging.basicConfig(level=logging.INFO)
 
 ICON_PATH = Path(__file__).parent / "assets" / "smart-monkey-icon.svg"
-ROUTES = ["/upload", "/analysis", "/editor", "/export"]
 VARIANT_THEME_MAP = {
     "ATS Optimized": "Modern ATS",
     "Korean Resume": "Korean Corporate",
@@ -160,6 +158,103 @@ def inject_global_styles() -> None:
             color: #374151;
             font-size: 0.95rem;
         }
+        .hero-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.85rem;
+            margin-top: 1.2rem;
+        }
+        .hero-stat {
+            border-radius: 18px;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            padding: 0.9rem;
+        }
+        .hero-stat strong {
+            display: block;
+            font-size: 1.2rem;
+            color: #111827;
+            margin-bottom: 0.2rem;
+        }
+        .upload-stage-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .upload-dropzone {
+            border-radius: 26px;
+            border: 1.5px dashed rgba(79, 70, 229, 0.28);
+            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(244, 247, 255, 0.88));
+            padding: 1.2rem;
+        }
+        .upload-dropzone h4 {
+            margin: 0 0 0.45rem 0;
+            color: #111827;
+        }
+        .upload-dropzone p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.65;
+        }
+        .upload-checklist {
+            border-radius: 24px;
+            background: rgba(248, 250, 252, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            padding: 1.1rem;
+        }
+        .upload-checklist-item {
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
+            margin-bottom: 0.85rem;
+            color: #374151;
+        }
+        .upload-checklist-item strong {
+            color: #111827;
+        }
+        .requirement-panel {
+            border-radius: 24px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            padding: 1.1rem;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.04);
+            margin-bottom: 0.9rem;
+        }
+        .requirement-panel h4 {
+            margin: 0 0 0.45rem 0;
+            color: #111827;
+        }
+        .requirement-panel p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.65;
+        }
+        .requirement-note {
+            border-radius: 18px;
+            background: rgba(79, 70, 229, 0.06);
+            color: #4338ca;
+            padding: 0.8rem 0.9rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.8rem;
+        }
+        .upload-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            margin-top: 0.9rem;
+        }
+        .upload-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.38rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(79, 70, 229, 0.08);
+            color: #4338ca;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
         .workflow-card {
             background: rgba(255,255,255,0.82);
             border: 1px solid rgba(148, 163, 184, 0.2);
@@ -248,6 +343,87 @@ def inject_global_styles() -> None:
             font-weight: 700;
             margin-bottom: 0.6rem;
         }
+        .analysis-shell {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 1.25rem;
+            align-items: center;
+        }
+        .analysis-visual {
+            min-height: 280px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(224, 231, 255, 0.9), rgba(236, 253, 245, 0.9));
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .analysis-orb {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(6px);
+            animation: floaty 4.8s ease-in-out infinite;
+        }
+        .analysis-orb.one {
+            width: 120px;
+            height: 120px;
+            background: rgba(79, 70, 229, 0.18);
+            top: 24px;
+            left: 28px;
+        }
+        .analysis-orb.two {
+            width: 160px;
+            height: 160px;
+            background: rgba(16, 185, 129, 0.16);
+            right: 24px;
+            bottom: 18px;
+            animation-delay: 0.8s;
+        }
+        .analysis-panel {
+            position: relative;
+            z-index: 1;
+            height: 100%;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(255,255,255,0.6);
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        .analysis-bar {
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.28);
+            overflow: hidden;
+            margin: 0.8rem 0 1rem 0;
+        }
+        .analysis-bar span {
+            display: block;
+            height: 100%;
+            width: 72%;
+            background: linear-gradient(90deg, #4f46e5, #10b981);
+            animation: pulsebar 2.2s ease-in-out infinite;
+        }
+        .analysis-line {
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.3);
+            margin-bottom: 0.65rem;
+        }
+        .analysis-line.short {
+            width: 62%;
+        }
+        .analysis-line.medium {
+            width: 78%;
+        }
+        @keyframes floaty {
+            0% { transform: translateY(0px) translateX(0px); }
+            50% { transform: translateY(-10px) translateX(8px); }
+            100% { transform: translateY(0px) translateX(0px); }
+        }
+        @keyframes pulsebar {
+            0% { width: 58%; }
+            50% { width: 82%; }
+            100% { width: 58%; }
+        }
         .hero-preview {
             min-height: 320px;
             border-radius: 28px;
@@ -312,6 +488,11 @@ def inject_global_styles() -> None:
             .hero-grid {
                 grid-template-columns: 1fr;
             }
+            .hero-stats,
+            .upload-stage-grid,
+            .analysis-shell {
+                grid-template-columns: 1fr;
+            }
             .hero-copy h1 {
                 font-size: 2.8rem;
                 max-width: none;
@@ -338,6 +519,10 @@ def init_state() -> None:
         }
     if "workflow_stage" not in st.session_state:
         st.session_state.workflow_stage = 1
+    if "analysis_ready" not in st.session_state:
+        st.session_state.analysis_ready = False
+    if "analysis_started" not in st.session_state:
+        st.session_state.analysis_started = False
 
 
 def render_branding() -> None:
@@ -348,10 +533,24 @@ def render_branding() -> None:
             <div class='hero-grid'>
                 <div class='hero-copy'>
                     <h1>Is your resume good enough?</h1>
-                    <p>Smart Monkey checks ATS compatibility, rebuilds your profile, and turns raw resume inputs into polished, editable resume variants with a cleaner workflow for analysis, editing, and export.</p>
+                    <p>Upload your current resume, match it against a real job description, review the ATS gap, then edit and export polished English and Korean resume versions in one guided flow.</p>
                     <div class='hero-upload'>
-                        <strong>Upload your resume</strong>
-                        <span>PDF and DOCX only. Add job requirements, design references, and profile assets in one flow.</span>
+                        <strong>Step 1 starts here</strong>
+                        <span>Upload one resume or multiple supporting files, then continue to the requirement matching flow.</span>
+                    </div>
+                    <div class='hero-stats'>
+                        <div class='hero-stat'>
+                            <strong>1 to many</strong>
+                            <span class='muted-copy'>Upload one resume or multiple PDFs in the same intake.</span>
+                        </div>
+                        <div class='hero-stat'>
+                            <strong>ATS first</strong>
+                            <span class='muted-copy'>Review the score and gaps before any generation happens.</span>
+                        </div>
+                        <div class='hero-stat'>
+                            <strong>Editable HTML</strong>
+                            <span class='muted-copy'>Refine the final resume before exporting English and Korean files.</span>
+                        </div>
                     </div>
                 </div>
                 <div class='hero-preview'>
@@ -432,24 +631,25 @@ def render_settings_trigger() -> ProviderSettings:
     return settings
 
 
-def render_sidebar_navigation() -> str:
-    workflow: WorkflowArtifacts = st.session_state.workflow
+def render_sidebar_navigation() -> None:
     with st.sidebar:
         st.markdown("## Smart Monkey")
         st.caption("Workflow progress")
-        selected_route = st.radio(
-            "Navigate",
-            ROUTES,
-            index=ROUTES.index(workflow.selected_route) if workflow.selected_route in ROUTES else 0,
-            label_visibility="collapsed",
-        )
-        workflow.selected_route = selected_route
-        st.caption("Home, requirements, ATS review, editor, export")
-    return selected_route
+        stages = [
+            (1, "Upload resume"),
+            (2, "Add job description"),
+            (3, "Analyze ATS fit"),
+            (4, "Edit resume"),
+            (5, "Export files"),
+        ]
+        current_stage = st.session_state.workflow_stage
+        for stage_number, label in stages:
+            marker = "●" if current_stage == stage_number else "○"
+            st.markdown(f"{marker} {label}")
+        st.caption("Follow the steps from top to bottom.")
 
 
 def set_stage(route: str, stage: int) -> None:
-    st.session_state.workflow.selected_route = route
     st.session_state.workflow_stage = stage
 
 
@@ -474,9 +674,13 @@ def render_template_gallery(selected_theme: str) -> str:
         theme = THEMES[theme_name]
         meta = TEMPLATE_CATALOG[theme_name]
         with columns[index % 2]:
-            st.markdown(
-                f"""
-                <div class='template-card'>
+            st.markdown("<div class='template-card'>", unsafe_allow_html=True)
+            preview_path = get_preview_image_path(theme_name)
+            if preview_image_exists(theme_name):
+                st.image(str(preview_path), use_container_width=True)
+            else:
+                st.markdown(
+                    f"""
                     <div class='template-preview' style='background: linear-gradient(135deg, {theme['background']}, {theme['surface']});'>
                         <div class='template-main'>
                             <div class='template-chip' style='background:{theme['accent']}18;color:{theme['accent']};'>{meta['tag']}</div>
@@ -494,10 +698,9 @@ def render_template_gallery(selected_theme: str) -> str:
                             <div class='template-line short'></div>
                         </div>
                     </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+                    """,
+                    unsafe_allow_html=True,
+                )
             st.markdown(f"**{meta['label']}**")
             st.caption(meta['description'])
             st.caption(f"Layout: {meta['layout']}")
@@ -510,7 +713,15 @@ def render_template_gallery(selected_theme: str) -> str:
                 selected = theme_name
                 st.session_state.workflow.selected_theme = theme_name
                 st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
     return selected
+
+
+def cache_template_preview_html(profile: ResumeProfile, photo_data_uri: str | None = None) -> None:
+    for theme_name in TEMPLATE_CATALOG:
+        preview_html = generate_resume_html(profile, theme_name, photo_data_uri)
+        write_preview_html(theme_name, preview_html)
+    generate_preview_images()
 
 
 def render_home_page() -> None:
@@ -520,16 +731,44 @@ def render_home_page() -> None:
         "Upload your current resume",
         "Start with one PDF or multiple PDFs. You can combine resume, portfolio, project, and certification files in one intake step.",
     )
+    st.markdown(
+        """
+        <div class='upload-stage-grid'>
+            <div class='upload-dropzone'>
+                <h4>Upload the source files for this application</h4>
+                <p>Add your current resume first. You can also include portfolio, project, or certification files if they contain verified evidence you want the system to use later.</p>
+                <div class='upload-pill-row'>
+                    <span class='upload-pill'>PDF</span>
+                    <span class='upload-pill'>DOCX</span>
+                    <span class='upload-pill'>TXT</span>
+                    <span class='upload-pill'>Multiple files supported</span>
+                </div>
+            </div>
+            <div class='upload-checklist'>
+                <div class='upload-checklist-item'><span>01</span><div><strong>Upload your current resume</strong><br/>Start with the exact material you already have.</div></div>
+                <div class='upload-checklist-item'><span>02</span><div><strong>Add the target job description</strong><br/>Paste text or upload the requirement file in the next step.</div></div>
+                <div class='upload-checklist-item'><span>03</span><div><strong>Review ATS fit before generation</strong><br/>Only then generate and edit the optimized resume.</div></div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     resume_files = st.file_uploader(
         "Upload resume files",
         type=["pdf", "docx", "txt"],
         accept_multiple_files=True,
         key="home_resume_files",
+        label_visibility="collapsed",
     )
     if resume_files:
         uploads["resume_files"] = resume_files
         st.success(f"{len(resume_files)} file(s) ready for analysis.")
-    st.caption("Supported formats: PDF, DOCX, TXT")
+        file_names = ", ".join(file.name for file in resume_files[:4])
+        if len(resume_files) > 4:
+            file_names = f"{file_names}, +{len(resume_files) - 4} more"
+        st.caption(f"Attached: {file_names}")
+    else:
+        st.caption("Supported formats: PDF, DOCX, TXT")
     if st.button("Continue to Job Description", type="primary", use_container_width=True):
         if not uploads["resume_files"]:
             st.error("Upload at least one resume file before continuing.")
@@ -548,19 +787,43 @@ def render_requirement_page() -> None:
     )
     left, right = st.columns(2, gap="large")
     with left:
+        st.markdown(
+            """
+            <div class='requirement-panel'>
+                <h4>Paste the full job description</h4>
+                <p>Include responsibilities, required skills, preferred qualifications, tools, and any role-specific language you want the ATS analysis to match against.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         uploads["jd_text"] = st.text_area(
             "Paste job description",
             value=uploads.get("jd_text", ""),
-            height=260,
+            height=320,
             key="workflow_jd_text",
             placeholder="Paste the full job description here...",
+            label_visibility="collapsed",
+        )
+        st.markdown(
+            "<div class='requirement-note'>Best results come from the full job post, not a short summary.</div>",
+            unsafe_allow_html=True,
         )
     with right:
+        st.markdown(
+            """
+            <div class='requirement-panel'>
+                <h4>Upload requirement and optional reference files</h4>
+                <p>Upload the job description if it is saved as a document. You can also add a design reference and a profile photo for the final resume layout.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         jd_files = st.file_uploader(
             "Or upload job description files",
             type=["pdf", "docx", "txt"],
             accept_multiple_files=True,
             key="workflow_jd_files",
+            label_visibility="collapsed",
         )
         if jd_files:
             uploads["jd_files"] = jd_files
@@ -570,12 +833,14 @@ def render_requirement_page() -> None:
             type=["pdf", "png", "jpg", "jpeg"],
             accept_multiple_files=False,
             key="workflow_design_reference",
+            label_visibility="collapsed",
         )
         uploads["photo"] = st.file_uploader(
             "Optional profile photo",
             type=["png", "jpg", "jpeg"],
             accept_multiple_files=False,
             key="workflow_photo",
+            label_visibility="collapsed",
         )
     action_left, action_right = st.columns(2)
     with action_left:
@@ -587,10 +852,57 @@ def render_requirement_page() -> None:
             if not uploads.get("jd_text") and not uploads.get("jd_files"):
                 st.error("Paste a job description or upload at least one requirement file.")
             else:
-                analyze_current_resume()
-                if st.session_state.workflow.ats_report:
-                    set_stage("/editor", 3)
-                    st.rerun()
+                st.session_state.analysis_ready = False
+                st.session_state.analysis_started = False
+                set_stage("/analysis", 3)
+                st.rerun()
+    close_stage_header()
+
+
+def render_analysis_loading_page() -> None:
+    if not st.session_state.analysis_started:
+        st.session_state.analysis_started = True
+        st.rerun()
+
+    render_stage_header(
+        "Step 3",
+        "Analyzing your resume against the requirement",
+        "The app is extracting the requirement, checking ATS fit, and preparing a verified optimization plan before generating the resume.",
+    )
+    st.markdown(
+        """
+        <div class='analysis-shell'>
+            <div>
+                <h3 style='margin-bottom:0.75rem;'>Working on the requirement match</h3>
+                <p class='muted-copy'>We are checking keyword alignment, skill coverage, role fit, and verified evidence from your uploaded resume. No unsupported claims should be added.</p>
+                <div class='analysis-bar'><span></span></div>
+                <div class='analysis-line'></div>
+                <div class='analysis-line medium'></div>
+                <div class='analysis-line short'></div>
+                <div class='requirement-note' style='margin-top:1rem;'>LLM is processing your request. This step may take a few seconds depending on the provider and file size.</div>
+            </div>
+            <div class='analysis-visual'>
+                <div class='analysis-orb one'></div>
+                <div class='analysis-orb two'></div>
+                <div class='analysis-panel'>
+                    <div style='font-size:0.8rem;font-weight:700;color:#4f46e5;margin-bottom:0.8rem;'>ATS ANALYSIS</div>
+                    <div class='analysis-line medium'></div>
+                    <div class='analysis-line'></div>
+                    <div class='analysis-line short'></div>
+                    <div class='analysis-bar'><span></span></div>
+                    <div class='analysis-line'></div>
+                    <div class='analysis-line medium'></div>
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    with st.spinner("Analyzing resume and job description..."):
+        analyze_current_resume()
+    st.session_state.analysis_ready = True
+    st.session_state.analysis_started = False
+    st.rerun()
     close_stage_header()
 
 
@@ -690,6 +1002,8 @@ def render_resume_generation_page() -> None:
 
 def render_final_export_page() -> None:
     workflow: WorkflowArtifacts = st.session_state.workflow
+    settings: ProviderSettings = st.session_state.settings
+    uploads = st.session_state.uploads
     if not workflow.english_html:
         st.info("Finalize the resume before export.")
         return
@@ -698,8 +1012,23 @@ def render_final_export_page() -> None:
         "Export English and Korean resumes",
         "When you are satisfied with the final content, download the resume in English and Korean. Korean localization is generated at this stage for a more natural final version.",
     )
-    if workflow.localized_profile and not workflow.korean_html:
-        workflow.korean_html = generate_resume_html(workflow.localized_profile, "Korean Corporate")
+    if not workflow.korean_html:
+        provider = None
+        try:
+            provider = build_provider(settings)
+        except Exception:
+            provider = None
+
+        workflow.localized_profile = (
+            localize_resume(workflow.optimized_profile, provider, "Korean") if provider else workflow.optimized_profile
+        )
+
+        photo_data_uri = None
+        if uploads["photo"] is not None:
+            enhanced = enhance_headshot(uploads["photo"].getvalue())
+            photo_data_uri = image_to_data_uri(enhanced)
+
+        workflow.korean_html = generate_resume_html(workflow.localized_profile, "Korean Corporate", photo_data_uri)
     render_downloads(workflow.english_html, workflow.korean_html, workflow.optimized_profile)
     st.caption("The Korean version should be reviewed for tone and natural phrasing before sending to employers.")
     close_stage_header()
@@ -752,6 +1081,8 @@ def analyze_current_resume() -> None:
 def render_analysis_page() -> None:
     if st.session_state.workflow_stage <= 2:
         render_requirement_page()
+    elif not st.session_state.analysis_ready:
+        render_analysis_loading_page()
     else:
         render_ats_review_page()
 
@@ -770,6 +1101,8 @@ def generate_resume_variant(variant: str) -> None:
     workflow.selected_variant = variant
     workflow.selected_theme = VARIANT_THEME_MAP.get(variant, "Modern ATS")
     workflow.optimized_profile = reconstruct_profile(workflow.base_profile, workflow.requirements, provider)
+    workflow.localized_profile = ResumeProfile()
+    workflow.korean_html = ""
 
     photo_data_uri = None
     if uploads["photo"] is not None:
@@ -777,8 +1110,8 @@ def generate_resume_variant(variant: str) -> None:
         photo_data_uri = image_to_data_uri(enhanced)
 
     workflow.english_html = generate_resume_html(workflow.optimized_profile, workflow.selected_theme, photo_data_uri)
-    workflow.localized_profile = localize_resume(workflow.optimized_profile, provider, "Korean") if provider else workflow.optimized_profile
-    workflow.korean_html = generate_resume_html(workflow.localized_profile, "Korean Corporate", photo_data_uri)
+    cache_template_preview_html(workflow.optimized_profile, photo_data_uri)
+    st.session_state.analysis_ready = True
 
 
 def render_editor_page() -> None:
@@ -794,13 +1127,14 @@ def main() -> None:
     inject_global_styles()
     render_settings_trigger()
     render_branding()
-    route = render_sidebar_navigation()
+    render_sidebar_navigation()
 
-    if route == "/upload":
+    stage = st.session_state.workflow_stage
+    if stage == 1:
         render_upload_page()
-    elif route == "/analysis":
+    elif stage in (2, 3):
         render_analysis_page()
-    elif route == "/editor":
+    elif stage == 4:
         render_editor_page()
     else:
         render_export_page()
